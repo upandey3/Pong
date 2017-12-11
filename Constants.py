@@ -1,0 +1,10 @@
+black = (0,0,0)
+white = (255, 255, 255)
+red = (255, 0, 0)
+green = (0, 255, 0)
+blue = (0, 0, 255)
+paddle_height = 0.2
+init_state = (0.5, 0.5, 0.03, 0.01, 0.5-(paddle_height/2))
+d_h, d_w = 1, 1 # display height and width
+paddle_step = 0.04
+wall_width = 10
