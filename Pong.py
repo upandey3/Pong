@@ -1,7 +1,7 @@
 from QLearning import QLearningAgent
 from Constants import *
 from random import randint
-# import pygame
+import pygame
 
 class Pong:
 
@@ -13,10 +13,10 @@ class Pong:
         self.GUI = GUI
         self.actions = [self.adj(paddle_step), -self.adj(paddle_step), 0]
         self.start_x, self.end_x = 0, self.adj(d_w) # start and end x coordinates for ball
-        self.agent = QLearningAgent(self.end_x, GUI)
-        self.alpha = 1 # learning rate
+        self.agent = QLearningAgent(self.adj, self.end_x, GUI)
+        self.alpha = 0.9 # learning rate
         self.gamma = 0.3 # discount factor : short-sighted .... far-sighted
-
+        self.trainCount = 50000
     def guiInit(self):
         pygame.init()
         window = (int(self.adj(d_w)), int(self.adj(d_h)))
@@ -30,10 +30,9 @@ class Pong:
         if self.GUI:
             screen, clock = self.guiInit()
 
-        i = 0
         stop = False
         while True:
-            if self.GUI:
+            if self.GUI and len(self.BounceCount) > self.trainCount:
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT:
                         stop = True
@@ -45,15 +44,12 @@ class Pong:
                     #         self.updatePaddleY(self.adj(paddle_step))
 
                 # print(event)
-            i += 1
-            # if i == 1000:
-            #      break
             if stop: break
 
             # Get an action using exploration function
             max_a = self.agent.getMaxActionwithF(list(self.state))
             s_prev = list(self.state)
-            print(self.state)
+            # print(self.state)
 
             # # Perform action and get reward
             step = self.actions[max_a]
@@ -66,8 +62,7 @@ class Pong:
             self.agent.incrementNsa(list(s_prev), max_a)
             self.agent.updateQ(self.alpha, self.gamma, list(s_prev), list(self.state), max_a, r)
 
-
-            if self.GUI:
+            if self.GUI and len(self.BounceCount) > self.trainCount:
                 #Refresh Screen
                 screen.fill(white)
                 self.drawLeftWall(screen)
@@ -82,25 +77,26 @@ class Pong:
         if self.GUI: pygame.quit()
 
     def startGame(self, screen):
-        print("The number of bounces was", self.BounceCount[-1])
+        bounces = self.BounceCount[-1]
         average = sum(self.BounceCount)/len(self.BounceCount)
-        print("The average number of bounces is ", average)
+        if len(self.BounceCount) % 5000 == 0:
+            print ("Avg: ", average, ", bounces: ", bounces, ", max : ", max(self.BounceCount), ", games: ", len(self.BounceCount))
         self.BounceCount.append(0)
         self.state = map(self.adj, self.initialState) #(ball_x, ball_y, velocity_x, velocity_y, paddle_y)
 
-        if self.GUI:
+        if self.GUI and len(self.BounceCount) > self.trainCount:
             screen.fill(white)
             self.drawLeftWall(screen)
             self.updateRightPaddle(screen)
             self.drawBall(screen)
-            # pygame.time.wait(500)
+            pygame.time.wait(500)
 
     # Return reward
     def updateBallCoord(self):
         # print(self.state)
         reward = 0
         #Update Y-Coordinate
-        ball_y = self.state[1]# + self.state[3]
+        ball_y = self.state[1] + self.state[3]
         if ball_y < 0:
             self.state[1] = abs(ball_y)
             self.state[3] = abs(self.state[3])
@@ -109,10 +105,10 @@ class Pong:
             self.state[1] = self.adj(2) - ball_y
             self.state[3] = -self.state[3]
             return reward
-        self.state[1] = ball_y + self.state[3]
+        self.state[1] = ball_y #+ self.state[3]
 
         #Update X-Coordinate
-        ball_x = self.state[0]
+        ball_x = self.state[0] + self.state[2]
         if ball_x < 0:
             self.state[0] = abs(ball_x)
             self.state[2] = abs(self.state[2])
@@ -131,7 +127,7 @@ class Pong:
             else: # Paddle missed
                 return -1
         else:
-            self.state[0] = ball_x + self.state[2]
+            self.state[0] = ball_x  #+ self.state[2]
 
         if abs(self.state[2]) <= self.adj(0.03): #velocity_x
             self.state[2] = self.adj(0.04) * (-1 if self.state[0] < 0 else 1)
@@ -145,7 +141,6 @@ class Pong:
         self.state[2] = round(self.state[2], 2)
         self.state[3] = round(self.state[3], 2)
         return reward
-
 
     def updatePaddleY(self, increment):
         if self.state[4] + increment < 0:
@@ -169,5 +164,5 @@ class Pong:
         pygame.draw.rect(screen, black, [self.end_x-wall_width, paddle_y, wall_width, self.adj(paddle_height)])
 
 
-p = Pong()
+p = Pong(True)
 p.play()
