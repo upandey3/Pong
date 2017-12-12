@@ -16,7 +16,7 @@ class Pong:
         self.agent = QLearningAgent(self.adj, self.end_x, GUI)
         self.alpha = 0.9 # learning rate
         self.gamma = 0.3 # discount factor : short-sighted .... far-sighted
-        self.trainCount = 50000
+        self.trainCount = 2000
     def guiInit(self):
         pygame.init()
         window = (int(self.adj(d_w)), int(self.adj(d_h)))
@@ -27,6 +27,7 @@ class Pong:
 
     def play(self):
         screen = None
+        start = True
         if self.GUI:
             screen, clock = self.guiInit()
 
@@ -79,7 +80,7 @@ class Pong:
     def startGame(self, screen):
         bounces = self.BounceCount[-1]
         average = sum(self.BounceCount)/len(self.BounceCount)
-        if len(self.BounceCount) % 5000 == 0:
+        if len(self.BounceCount) % 2000 == 0:
             print ("Avg: ", average, ", bounces: ", bounces, ", max : ", max(self.BounceCount), ", games: ", len(self.BounceCount))
         self.BounceCount.append(0)
         self.state = map(self.adj, self.initialState) #(ball_x, ball_y, velocity_x, velocity_y, paddle_y)
@@ -164,5 +165,5 @@ class Pong:
         pygame.draw.rect(screen, black, [self.end_x-wall_width, paddle_y, wall_width, self.adj(paddle_height)])
 
 
-p = Pong(True)
+p = Pong()
 p.play()
